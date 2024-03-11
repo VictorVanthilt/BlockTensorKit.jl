@@ -1,27 +1,67 @@
 #! format: off
-struct BlockTensorMap{S<:IndexSpace,N₁,N₂,T<:AbstractTensorMap{S,N₁,N₂},N} <:
-       AbstractArray{T,N}
-    data::Dict{CartesianIndex{N},T}
+# struct BlockTensorMap{S<:IndexSpace,N₁,N₂,T<:AbstractTensorMap{S,N₁,N₂},N} <:
+#        AbstractArray{T,N}
+#     data::Dict{CartesianIndex{N},T}
+#     codom::ProductSumSpace{S,N₁}
+#     dom::ProductSumSpace{S,N₂}
+#     function BlockTensorMap{S,N₁,N₂,T,N}(::UndefInitializer, codom::ProductSumSpace{S,N₁},
+#                                        dom::ProductSumSpace{S,N₂}) where {
+#                                        S,N₁,N₂,T<:AbstractTensorMap{S,N₁,N₂},N}
+#         N₁ + N₂ == N ||
+#             throw(TypeError(:BlockTensorMap, BlockTensorMap{S,N₁,N₂,T,N₁+N₂},
+#                             BlockTensorMap{S,N₁,N₂,T,N}))
+#         return new{S,N₁,N₂,T,N}(Dict{CartesianIndex{N},T}(), codom, dom)
+#     end
+#     function BlockTensorMap{S,N₁,N₂,T}(data::Dict{CartesianIndex{N},T},
+#                                        codom::ProductSumSpace{S,N₁},
+#                                        dom::ProductSumSpace{S,N₂}) where {
+#                                        S,N₁,N₂,T<:AbstractTensorMap{S,N₁,N₂},N}
+#         N₁ + N₂ == N ||
+#             throw(TypeError(:BlockTensorMap, BlockTensorMap{S,N₁,N₂,T,N₁+N₂},
+#                             BlockTensorMap{S,N₁,N₂,T,N}))
+#         return new{S,N₁,N₂,T,N}(data, codom, dom)
+#     end
+# end
+
+struct BlockTensorMap{S<:IndexSpace,N₁,N₂,E<:Number,N} <: AbstractArray{AbstractTensorMap{S,N₁,N₂},N}
+    data::Dict{CartesianIndex{N},AbstractTensorMap{S,N₁,N₂}}
     codom::ProductSumSpace{S,N₁}
     dom::ProductSumSpace{S,N₂}
-    function BlockTensorMap{S,N₁,N₂,T,N}(::UndefInitializer, codom::ProductSumSpace{S,N₁},
-                                       dom::ProductSumSpace{S,N₂}) where {
-                                       S,N₁,N₂,T<:AbstractTensorMap{S,N₁,N₂},N}
-        N₁ + N₂ == N ||
-            throw(TypeError(:BlockTensorMap, BlockTensorMap{S,N₁,N₂,T,N₁+N₂},
-                            BlockTensorMap{S,N₁,N₂,T,N}))
-        return new{S,N₁,N₂,T,N}(Dict{CartesianIndex{N},T}(), codom, dom)
+
+    function BlockTensorMap{S,N₁,N₂,E,N}(::UndefInitializer, codom::ProductSumSpace{S,N₁},
+                                            dom::ProductSumSpace{S,N₂}) where {
+                                                S,N₁,N₂,E<:Number,N}
+        new{S,N₁,N₂,E,N}(Dict{CartesianIndex{N},AbstractTensorMap{S,N₁,N₂}}(), codom, dom)
     end
+
+    function BlockTensorMap{S,N₁,N₂,E,N}(data::Dict{CartesianIndex{N},AbstractTensorMap{S,N₁,N₂}},
+        dom::ProductSumSpace{S,N₂}, codom::ProductSumSpace{S,N₂}) where {S,N₁,N₂,E<:Number,N}
+        new{S,N₁,N₂,E,N}(data, codom, dom)
+    end
+
+
+    function BlockTensorMap{S,N₁,N₂,T,N}(::UndefInitializer, codom::ProductSumSpace{S,N₁},
+                                               dom::ProductSumSpace{S,N₂}) where {
+                                               S,N₁,N₂,T<:AbstractTensorMap{S,N₁,N₂},N}
+                E = scalartype(T)
+                N₁ + N₂ == N ||
+                    throw(TypeError(:BlockTensorMap, BlockTensorMap{S,N₁,N₂,E,N₁+N₂},
+                                    BlockTensorMap{S,N₁,N₂,E,N}))
+                return new{S,N₁,N₂,E,N}(Dict{CartesianIndex{N},AbstractTensorMap{S,N₁,N₂}}(), codom, dom)
+            end
+
     function BlockTensorMap{S,N₁,N₂,T}(data::Dict{CartesianIndex{N},T},
-                                       codom::ProductSumSpace{S,N₁},
-                                       dom::ProductSumSpace{S,N₂}) where {
-                                       S,N₁,N₂,T<:AbstractTensorMap{S,N₁,N₂},N}
-        N₁ + N₂ == N ||
-            throw(TypeError(:BlockTensorMap, BlockTensorMap{S,N₁,N₂,T,N₁+N₂},
-                            BlockTensorMap{S,N₁,N₂,T,N}))
-        return new{S,N₁,N₂,T,N}(data, codom, dom)
+                                                codom::ProductSumSpace{S,N₁},
+                                                dom::ProductSumSpace{S,N₂}) where {
+                                                S,N₁,N₂,T<:AbstractTensorMap{S,N₁,N₂},N}
+                E = scalartype(T)
+                N₁ + N₂ == N ||
+                    throw(TypeError(:BlockTensorMap, BlockTensorMap{S,N₁,N₂,E,N₁+N₂},
+                                    BlockTensorMap{S,N₁,N₂,E,N}))
+                return new{S,N₁,N₂,E,N}(data, codom, dom)
     end
 end
+
 #! format: on
 
 # alias for switching parameters
@@ -35,6 +75,10 @@ function BlockTensorMap{S,N₁,N₂,T,N}(::UndefInitializer,
                                      V::TensorMapSumSpace{S,N₁,N₂}) where {S,N₁,N₂,T,N}
     return BlockTensorMap{S,N₁,N₂,T,N}(undef, codomain(V), domain(V))
 end
+function BlockTensorMap{S,N₁,N₂,E}(args...) where {S,N₁,N₂,E<:Number}
+    return BlockTensorMap{S,N₁,N₂,E,N₁ + N₂}(args...)
+end
+
 
 # Constructors
 # ------------
