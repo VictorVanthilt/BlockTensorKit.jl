@@ -85,7 +85,13 @@ end
 function BlockTensorMap(::UndefInitializer, ::Type{T}, codom::ProductSumSpace{S,N₁},
                         dom::ProductSumSpace{S,N₂}) where {T,S,N₁,N₂}
     T′ = T <: AbstractTensorMap{S,N₁,N₂} ? T : tensormaptype(S, N₁, N₂, T)
-    E = scalartype(T′)
+
+    # default to ComplexF64
+    E = try 
+            scalartype(T′)
+        catch e
+            ComplexF64
+        end
     return BlockTensorMap{S,N₁,N₂,E}(undef, codom, dom)
 end
 function BlockTensorMap(::UndefInitializer, T::Type, P::TensorMapSumSpace)
