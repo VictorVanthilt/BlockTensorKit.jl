@@ -88,3 +88,6 @@ function VI.inner(x::BlockTensorMap, y::BlockTensorMap)
     end
     return s
 end
+
+VI.scalartype(::BlockTensorMap{S,N₁,N₂,T}) where {S,N₁,N₂,T} = T
+
