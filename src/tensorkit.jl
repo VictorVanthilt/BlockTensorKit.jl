@@ -7,6 +7,8 @@ function TK.sectortype(::Union{T,Type{<:T}}) where {S,T<:BlockTensorMap{S}}
 end
 TK.storagetype(::Union{B,Type{B}}) where {T,B<:BlockTensorArray{T}} = storagetype(T)
 TK.storagetype(::Type{Union{A,B}}) where {A,B} = Union{storagetype(A),storagetype(B)}
+TK.storagetype(::BlockTensorMap{S,N₁,N₂}) where {S,N₁,N₂} = AbstractTensorMap{S,N₁,N₂}
+
 function TK.similarstoragetype(TT::Type{<:BlockTensorMap}, ::Type{T}) where {T}
     return Core.Compiler.return_type(similar, Tuple{storagetype(TT),Type{T}})
 end
